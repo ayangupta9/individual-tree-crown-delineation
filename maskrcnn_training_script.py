@@ -1,4 +1,5 @@
 import json
+import detectron2
 import os
 from detectron2.structures import BoxMode
 from detectron2.data import DatasetCatalog, MetadataCatalog
@@ -32,7 +33,26 @@ from osgeo import gdal
 import albumentations as A
 warnings.filterwarnings("ignore")
 
+
+
 def get_image(raster_path):
+    def norma_data(data, norma_methods="dw"):
+        arr = np.empty(data.shape, dtype=np.float32)
+        for i in range(data.shape[-1]):
+            array = data[:, :, i]
+            mi_1, ma_99, mi_30, ma_70 = np.percentile(array, 1), np.percentile(array, 99), \
+                                        np.percentile(array, 30), np.percentile(array, 70)
+            if norma_methods == "dw":
+                new_array = np.log(array * 0.0001 + 1)
+                new_array = (new_array - mi_30 * 0.0001) / (ma_70 * 0.0001)
+                new_array = np.exp(new_array * 5 - 1)
+                new_array = new_array / (new_array + 1)
+
+            else:
+                new_array = (1*(array-mi_1)/(ma_99-mi_1)).clip(0, 1)
+            arr[:, :, i] = new_array
+        return arr
+
     ds = gdal.Open(raster_path)
     image = np.empty((ds.RasterYSize, ds.RasterXSize, ds.RasterCount), dtype=np.float32)
     for b in range(1, ds.RasterCount + 1):
@@ -44,22 +64,7 @@ def get_image(raster_path):
         image = norma_data(image, norma_methods='min-max')
     return image
 
-def norma_data(data, norma_methods="dw"):
-    arr = np.empty(data.shape, dtype=np.float32)
-    for i in range(data.shape[-1]):
-        array = data[:, :, i]
-        mi_1, ma_99, mi_30, ma_70 = np.percentile(array, 1), np.percentile(array, 99), \
-                                    np.percentile(array, 30), np.percentile(array, 70)
-        if norma_methods == "dw":
-            new_array = np.log(array * 0.0001 + 1)
-            new_array = (new_array - mi_30 * 0.0001) / (ma_70 * 0.0001)
-            new_array = np.exp(new_array * 5 - 1)
-            new_array = new_array / (new_array + 1)
-
-        else:
-            new_array = (1*(array-mi_1)/(ma_99-mi_1)).clip(0, 1)
-        arr[:, :, i] = new_array
-    return arr
+detectron2.data.detection_utils.read_image = get_image
 
 def get_tree_dicts(indices, annotation):
     img_dir=MULTICLASS_IMAGES_DIR
