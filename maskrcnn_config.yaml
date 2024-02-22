@@ -1,4 +1,0 @@
-ANNOTATIONS_PATH : './coco_instances_image.json'
-SPECIES_MAPPING_PATH : '/data_hdd/gartow/training_data/species_mapping.txt'
-MULTICLASS_IMAGES_DIR : '/data_hdd/gartow/training_data/tiles_multiclass/'
-
