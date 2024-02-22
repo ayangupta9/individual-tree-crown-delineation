@@ -33,8 +33,6 @@ from osgeo import gdal
 import albumentations as A
 warnings.filterwarnings("ignore")
 
-
-
 def get_image(raster_path):
     def norma_data(data, norma_methods="dw"):
         arr = np.empty(data.shape, dtype=np.float32)
